@@ -1,1 +1,1 @@
-# Automating-AWS-with-Terraform
+Automating AWS with Terraform
