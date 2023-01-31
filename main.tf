@@ -24,7 +24,7 @@ resource "aws_vpc" "main" {
 #creating public subnets
 resource "aws_subnet" "public" {
 
-  count =  length(local.public_cidr)
+  count = length(local.public_cidr)
 
   vpc_id            = aws_vpc.main.id
   cidr_block        = local.public_cidr[count.index]
@@ -65,7 +65,7 @@ resource "aws_internet_gateway" "main" {
 #elastic ip  for aws_nat_gateway
 resource "aws_eip" "nat" {
 
-  count = 2
+  count = length(local.public_cidr)
   vpc   = true
 
   tags = {
@@ -76,11 +76,13 @@ resource "aws_eip" "nat" {
 
 #aws_nat_gateway in public subnet 
 resource "aws_nat_gateway" "nat" {
+
+  count         = length(local.public_cidr)
   allocation_id = aws_eip.nat[count.index].id
   subnet_id     = aws_subnet.public[count.index].id
 
   tags = {
-    Name = "nat_gateway${count.index+1}"
+    Name = "nat_gateway${count.index + 1}"
   }
 }
 
@@ -104,7 +106,7 @@ resource "aws_route_table" "public-RTB" {
 #private-aws_route_table with nat gateway
 resource "aws_route_table" "private-RTB" {
 
-  count  = 2
+  count  = length(local.private_cidr)
   vpc_id = aws_vpc.main.id
 
   route {
@@ -121,8 +123,8 @@ resource "aws_route_table" "private-RTB" {
 #aws_route_table_association-public-subnets
 resource "aws_route_table_association" "public" {
 
-  count          = 2
-  subnet_id      = aws_subnet.public[count.index]
+  count          = length(local.public_cidr)
+  subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public-RTB.id
 }
 
@@ -130,9 +132,9 @@ resource "aws_route_table_association" "public" {
 #aws_route_table_association-private-subnet
 resource "aws_route_table_association" "private" {
 
-  count          = 2
-  subnet_id      = aws_subnet.private[index.count]
-  route_table_id = aws_route_table.private-RTB.id
+  count          = length(local.private_cidr)
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private-RTB[count.index].id
 }
 
 
