@@ -1,105 +1,90 @@
+#declaring locals
+
+locals {
+
+  vpc_cidr           = "10.0.0.0/16"
+  public_cidr        = ["10.0.0.0/24", "10.0.1.0/24"]
+  private_cidr       = ["10.0.2.0/24", "10.0.3.0/24"]
+  availability_zones = ["us-east-1a", "us-east-1b"]
+
+
+}
+
+
 # Create a VPC
 resource "aws_vpc" "main" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = local.vpc_cidr
 
   tags = {
-      Name = "terraform-launched-vpc"
+    Name = "terraform-launched-vpc"
   }
 
 }
 
-#creating public subnet 1
-resource "aws_subnet" "public-subnet-1" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.0.0/24"
+#creating public subnets
+resource "aws_subnet" "public" {
+
+  count =  length(local.public_cidr)
+
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.public_cidr[count.index]
+  availability_zone = local.availability_zones[count.index]
 
   tags = {
-      Name = "public subnet 1"
+    Name = "public subnet${count.index + 1}"
   }
 
 }
 
 
-#creating public subnet 2
-resource "aws_subnet" "public-subnet-2" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.1.0/24"
 
-    tags = {
-      Name = "public subnet 2"
-  }
+#creating private subnets
+resource "aws_subnet" "private" {
+  count = length(local.private_cidr)
 
-}
-
-#creating private subnet 1
-resource "aws_subnet" "private-subnet-1" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.2.0/24"
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = local.private_cidr[count.index]
+  availability_zone = local.availability_zones[count.index]
 
   tags = {
-      Name = "private subnet 1"
+    Name = "private subnet${count.index + 1}"
   }
 }
 
-#creating private subnet 2
-resource "aws_subnet" "private-subnet-2" {
-  vpc_id     = aws_vpc.main.id
-  cidr_block = "10.0.3.0/24"
-
-  tags = {
-      Name = "private subnet 2"
-  }
-  
-}
 
 #aws_internet_gateway 
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-      Name = "IGW-terraform-vpc"
+    Name = "IGW-terraform-vpc"
   }
 
 }
 
-#elastic ip 1 for aws_nat_gateway
-resource "aws_eip" "nat1" {
-  vpc      = true
+#elastic ip  for aws_nat_gateway
+resource "aws_eip" "nat" {
+
+  count = 2
+  vpc   = true
 
   tags = {
-      Name = "elastic ip 1"
+    Name = "elastic ip${count.index + 1}"
   }
 }
 
-#elastic ip 1 for aws_nat_gateway
-resource "aws_eip" "nat2" {
-  vpc      = true
+
+#aws_nat_gateway in public subnet 
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
 
   tags = {
-      Name = "elastic ip 2"
-  }
-  
-}
-
-#aws_nat_gateway in public subnet 1
-resource "aws_nat_gateway" "public-subnet-1" {
-  allocation_id = aws_eip.nat1.id
-  subnet_id     = aws_subnet.public-subnet-1.id
-
-  tags = {
-      Name = "nat_gateway 1"
+    Name = "nat_gateway${count.index+1}"
   }
 }
 
-#aws_nat_gateway in public subnet 2
-resource "aws_nat_gateway" "public-subnet-2" {
-  allocation_id = aws_eip.nat2.id
-  subnet_id     = aws_subnet.public-subnet-2.id
 
-  tags = {
-      Name = "nat_gateway 2"
-  }
-}
 
 
 #public-aws_route_table with aws_internet_gateway
@@ -112,64 +97,44 @@ resource "aws_route_table" "public-RTB" {
   }
 
   tags = {
-      Name = "public-RTB"
+    Name = "public-RTB"
   }
 }
 
 #private-aws_route_table with nat gateway
-resource "aws_route_table" "private-1-RTB" {
+resource "aws_route_table" "private-RTB" {
+
+  count  = 2
   vpc_id = aws_vpc.main.id
 
   route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.public-subnet-1.id
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.nat[count.index].id
   }
 
   tags = {
-      Name = "private-RTB-1"
+    Name = "private-RTB${count.index + 1}"
   }
 }
 
 
-#private-aws_route_table with nat gateway
-resource "aws_route_table" "private-2-RTB" {
-  vpc_id = aws_vpc.main.id
+#aws_route_table_association-public-subnets
+resource "aws_route_table_association" "public" {
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.public-subnet-2.id
-  }
-
-  tags = {
-      Name = "private-RTB-2"
-  }
-}
-
-#aws_route_table_association-public-subnet-1-public-RTB
-resource "aws_route_table_association" "public-subnet-1" {
-  subnet_id      = aws_subnet.public-subnet-1.id
+  count          = 2
+  subnet_id      = aws_subnet.public[count.index]
   route_table_id = aws_route_table.public-RTB.id
 }
 
 
-#aws-aws_route_table_association-public-subnet-2-public-RTB
-resource "aws_route_table_association" "public-subnet-2" {
-  subnet_id      = aws_subnet.public-subnet-2.id
-  route_table_id = aws_route_table.public-RTB.id
+#aws_route_table_association-private-subnet
+resource "aws_route_table_association" "private" {
+
+  count          = 2
+  subnet_id      = aws_subnet.private[index.count]
+  route_table_id = aws_route_table.private-RTB.id
 }
 
-
-#aws_route_table_association-private-subnet-1-private-RTB-1
-resource "aws_route_table_association" "private-subnet-1" {
-  subnet_id      = aws_subnet.private-subnet-1.id
-  route_table_id = aws_route_table.private-1-RTB.id
-}
-
-#aws_route_table_association-private-subnet-2-private-RTB-2
-resource "aws_route_table_association" "private-subnet-2" {
-  subnet_id      = aws_subnet.private-subnet-2.id
-  route_table_id = aws_route_table.private-2-RTB.id
-}
 
 
 
