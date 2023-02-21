@@ -1,12 +1,34 @@
+data "aws_ami" "amazonlinux" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernel-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["137112412989"]
+}
+
+
+
+
+
 
 #creating public ec2-instance
 resource "aws_instance" "public" {
-  ami                         = "ami-002070d43b0a4f171"
+  ami                         = data.aws_ami.amazonlinux.id
   associate_public_ip_address = true
   instance_type               = "t3.micro"
   key_name                    = "keypair"
   vpc_security_group_ids      = [aws_security_group.public.id]
   subnet_id                   = aws_subnet.public[0].id
+
+
 
 
   tags = {
@@ -16,7 +38,7 @@ resource "aws_instance" "public" {
 
 #creating private ec2-instance
 resource "aws_instance" "private" {
-  ami                    = "ami-002070d43b0a4f171"
+  ami                    = data.aws_ami.amazonlinux.id
   instance_type          = "t3.micro"
   key_name               = "keypair"
   vpc_security_group_ids = [aws_security_group.private.id]
@@ -39,6 +61,14 @@ resource "aws_security_group" "public" {
     description = "TLS from public"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["100.1.162.109/32"]
+  }
+
+  ingress {
+    description = "Allow access from public"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["100.1.162.109/32"]
   }
@@ -81,5 +111,6 @@ resource "aws_security_group" "private" {
     Name = "${var.env_code}-private"
   }
 }
+
 
 
