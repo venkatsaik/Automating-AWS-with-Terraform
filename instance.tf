@@ -1,7 +1,27 @@
+data "aws_ami" "amazonlinux" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-kernal-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["536761682030"]
+}
+
+
+
+
+
 
 #creating public ec2-instance
 resource "aws_instance" "public" {
-  ami                         = "ami-002070d43b0a4f171"
+  ami                         = data.aws_ami.amazonlinux.id
   associate_public_ip_address = true
   instance_type               = "t3.micro"
   key_name                    = "keypair"
@@ -16,7 +36,7 @@ resource "aws_instance" "public" {
 
 #creating private ec2-instance
 resource "aws_instance" "private" {
-  ami                    = "ami-002070d43b0a4f171"
+  ami                    = data.aws_ami.amazonlinux.id
   instance_type          = "t3.micro"
   key_name               = "keypair"
   vpc_security_group_ids = [aws_security_group.private.id]
@@ -81,5 +101,6 @@ resource "aws_security_group" "private" {
     Name = "${var.env_code}-private"
   }
 }
+
 
 
