@@ -3,7 +3,7 @@ data "aws_ami" "amazonlinux" {
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-kernal-*"]
+    values = ["amzn2-ami-kernel-*"]
   }
 
   filter {
@@ -11,7 +11,7 @@ data "aws_ami" "amazonlinux" {
     values = ["hvm"]
   }
 
-  owners = ["536761682030"]
+  owners = ["137112412989"]
 }
 
 
@@ -27,6 +27,8 @@ resource "aws_instance" "public" {
   key_name                    = "keypair"
   vpc_security_group_ids      = [aws_security_group.public.id]
   subnet_id                   = aws_subnet.public[0].id
+
+
 
 
   tags = {
@@ -59,6 +61,14 @@ resource "aws_security_group" "public" {
     description = "TLS from public"
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["100.1.162.109/32"]
+  }
+
+  ingress {
+    description = "Allow access from public"
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["100.1.162.109/32"]
   }
