@@ -24,10 +24,12 @@ resource "aws_instance" "public" {
   ami                         = data.aws_ami.amazonlinux.id
   associate_public_ip_address = true
   instance_type               = "t3.micro"
-  key_name                    = "keypair"
+  key_name                    = "myproject01"
   vpc_security_group_ids      = [aws_security_group.public.id]
   subnet_id                   = aws_subnet.public[0].id
 
+
+  user_data = file("user_data.sh")
 
 
 
@@ -40,7 +42,7 @@ resource "aws_instance" "public" {
 resource "aws_instance" "private" {
   ami                    = data.aws_ami.amazonlinux.id
   instance_type          = "t3.micro"
-  key_name               = "keypair"
+  key_name               = "myproject01"
   vpc_security_group_ids = [aws_security_group.private.id]
   subnet_id              = aws_subnet.private[0].id
 
@@ -62,7 +64,7 @@ resource "aws_security_group" "public" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["100.1.162.109/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -70,7 +72,7 @@ resource "aws_security_group" "public" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["100.1.162.109/32"]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   egress {
