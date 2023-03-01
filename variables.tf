@@ -1,7 +1,9 @@
 variable "env_code" {
   type = string
 }
- variable "myIP" {}
+
+variable "myIP" { 
+}
 
 variable "vpc_cidr" {}
 
