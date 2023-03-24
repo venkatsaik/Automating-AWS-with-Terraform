@@ -1,3 +1,4 @@
+
 terraform {
   required_providers {
     aws = {
@@ -6,19 +7,23 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket = "terraform-automation-remotestate"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-    dynamodb_table = "terraform-remote-state"
- 
-  }
-
 }
 
 # Configure the AWS Provider
 provider "aws" {
   region = "us-east-1"
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 

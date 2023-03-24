@@ -7,11 +7,11 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "terraform-automation-remotestate"
-    key            = "level-1.tfstate"
-    region         = "us-east-1"
+    bucket = "terraform-automation-remotestate"
+    key    = "level-1.tfstate"
+    region = "us-east-1"
     dynamodb_table = "terraform-remote-state"
-
+ 
   }
 
 }
