@@ -33,22 +33,6 @@ resource "aws_instance" "public" {
   }
 }
 
-#creating private ec2-instance
-resource "aws_instance" "private" {
-  ami                    = data.aws_ami.amazonlinux.id
-  instance_type          = "t3.micro"
-  key_name               = "myproject01"
-  vpc_security_group_ids = [aws_security_group.private.id]
-  subnet_id              = data.terraform_remote_state.level-1.outputs.private_subnet_id[1]
-
-user_data = file("user_data.sh")
-
-  tags = {
-    Name = "${var.env_code}-private"
-  }
-}
-
-
 #security for public instance
 resource "aws_security_group" "public" {
   name        = "${var.env_code}-public"
