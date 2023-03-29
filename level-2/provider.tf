@@ -10,6 +10,7 @@ terraform {
     bucket = "terraform-automation-remotestate"
     key    = "level-2.tfstate"
     region = "us-east-1"
+    dynamodb_table = "terraform-remote-state"
  
   }
 
