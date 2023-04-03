@@ -1,4 +1,4 @@
-env_code     = "terraform-variables"
+env_code = "terraform-variables"
 
 
 
