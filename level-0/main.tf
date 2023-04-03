@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "terraform_remote_state" {
-    bucket = "terraform-automation-remotestate"
+  bucket = "terraform-automation-remotestate"
 }
 
 resource "aws_dynamodb_table" "basic-dynamodb-table" {
